@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Save as MHTML",
   "description": "Save active tab as MHTML web page archive file format with a single click",
   "background": {
@@ -14,6 +14,7 @@
     "downloads",
     "notifications"
   ],
+  "homepage_url": "https://add0n.com/save-as-mhtml.html",
   "icons": {
     "16": "data/icons/16.png",
     "19": "data/icons/19.png",
