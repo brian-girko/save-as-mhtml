@@ -1,10 +1,11 @@
 {
   "manifest_version": 2,
-  "version": "0.1.4",
+  "version": "0.1.2",
   "name": "Save as MHTML",
   "description": "Save active tab as MHTML web page archive file format with a single click",
   "background": {
     "scripts": [
+      "pageCapture.js",
       "background.js"
   ]},
   "permissions": [
@@ -12,7 +13,8 @@
     "pageCapture",
     "activeTab",
     "downloads",
-    "notifications"
+    "notifications",
+    "*://*/*"
   ],
   "homepage_url": "https://add0n.com/save-as-mhtml.html",
   "icons": {
