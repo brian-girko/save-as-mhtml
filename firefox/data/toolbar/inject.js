@@ -4,13 +4,15 @@
 {
   const iframe = document.createElement('iframe');
 
-  const unload = () => {
+  const unload = (report = true) => {
     window.onmessage = '';
     iframe.remove();
     chrome.runtime.onMessage.removeListener(onmessage);
-    chrome.runtime.sendMessage({
-      method: 'close-me'
-    });
+    if (report) {
+      chrome.runtime.sendMessage({
+        method: 'close-me'
+      });
+    }
   };
 
   window.onmessage = e => {
@@ -101,7 +103,7 @@
 
   const onmessage = request => {
     if (request.method === 'unload') {
-      unload();
+      unload(false);
     }
   };
 

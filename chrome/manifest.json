@@ -4,6 +4,7 @@
   "name": "Save as MHTML",
   "description": "Edit and save active tab in MHTL/MHT (MIME HTML) archive file format",
   "background": {
+    "persistent": false,
     "scripts": [
       "background.js"
   ]},

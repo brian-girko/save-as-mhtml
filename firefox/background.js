@@ -96,10 +96,15 @@ const onCommand = tab => {
           document.designMode = '${mode}';
         `
       }, () => {
-        if (prefs.notify && mode === 'on') {
+        if (mode === 'on') {
           chrome.tabs.executeScript({
             file: 'data/toolbar/inject.js',
             runAt: 'document_start'
+          });
+        }
+        else {
+          chrome.tabs.sendMessage(tab.id, {
+            method: 'unload'
           });
         }
       });
