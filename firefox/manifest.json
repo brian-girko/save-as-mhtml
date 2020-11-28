@@ -4,6 +4,7 @@
   "name": "Save as MHTML",
   "description": "Save active tab as MHTML web page archive file format with a single click",
   "background": {
+    "persistent": false,
     "scripts": [
       "pageCapture.js",
       "background.js"
