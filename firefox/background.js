@@ -67,11 +67,16 @@ chrome.browserAction.onClicked.addListener(tab => chrome.pageCapture.saveAsMHTML
       title: 'Toggle Edit Mode',
       contexts: ['browser_action']
     });
+    chrome.contextMenus.create({
+      id: 'simplify',
+      title: 'Keep Selection Only',
+      contexts: ['browser_action']
+    });
   };
   chrome.runtime.onInstalled.addListener(startup);
   chrome.runtime.onStartup.addListener(startup);
 }
-const onCommand = (info, tab) => {
+const onCommand = tab => {
   chrome.tabs.executeScript({
     runAt: 'document_start',
     code: `document.designMode`
@@ -111,10 +116,20 @@ const onCommand = (info, tab) => {
     });
   });
 };
-chrome.contextMenus.onClicked.addListener(onCommand);
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'edit-page') {
+    onCommand(tab);
+  }
+  else if (info.menuItemId === 'simplify') {
+    chrome.tabs.executeScript({
+      file: 'data/simple.js',
+      runAt: 'document_start'
+    });
+  }
+});
 chrome.runtime.onMessage.addListener((request, sender) => {
   if (request.method === 'close-me') {
-    onCommand({}, sender.tab);
+    onCommand(sender.tab);
   }
 });
 
