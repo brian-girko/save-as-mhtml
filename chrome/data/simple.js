@@ -1,6 +1,6 @@
 {
   const selection = window.getSelection();
-  if (selection && selection.rangeCount) {
+  if (selection && selection.rangeCount && selection.toString().trim() > 1) {
     let range;
     if (selection.getRangeAt) {
       range = selection.getRangeAt(0);
