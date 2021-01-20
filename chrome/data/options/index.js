@@ -5,17 +5,23 @@ const toast = document.getElementById('toast');
 chrome.storage.local.get({
   'notify': true,
   'saveAs': false,
-  'filename': '[title]'
+  'filename': '[title]',
+  'extension': 'mhtml',
+  'mime': 'application/x-mimearchive'
 }, prefs => {
   document.getElementById('notify').checked = prefs.notify;
   document.getElementById('saveAs').checked = prefs.saveAs;
   document.getElementById('filename').value = prefs.filename;
+  document.getElementById('extension').value = prefs.extension;
+  document.getElementById('mime').value = prefs.mime;
 });
 
 document.getElementById('save').addEventListener('click', () => chrome.storage.local.set({
   'notify': document.getElementById('notify').checked,
   'saveAs': document.getElementById('saveAs').checked,
-  'filename': document.getElementById('filename').value || '[title]'
+  'filename': document.getElementById('filename').value || '[title]',
+  'extension': document.getElementById('extension').value || 'mhtml',
+  'mime': document.getElementById('mime').value || 'application/x-mimearchive'
 }, () => {
   toast.textContent = 'Options Saved.';
   window.setTimeout(() => toast.textContent = '', 750);

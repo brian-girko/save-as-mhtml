@@ -10,6 +10,10 @@
       white-space: nowrap;
       grid-gap: 10px;
       align-items: center;
+      margin-top: 10px;
+    }
+    .note {
+      margin-top: 5px
     }
   </style>
 </head>
@@ -20,11 +24,20 @@
     <input type="checkbox" id="saveAs">
     <label for="saveAs">Display the file-chooser to allow the user to select the file location</label>
   </div>
-  <div style="margin-top: 10px;" class="grid">
+  <div class="grid">
     <label for="filename">Filename Format</label>
     <input type="textbox" id="filename">
   </div>
-  <p style="margin-top: 5px;">Available options: <code>[title]</code>, <code>[date]</code>, <code>[current-date]</code>, <code>[time]</code>, <code>[current-time]</code></p>
+  <p class="note">Available options: <code>[title]</code>, <code>[hostname]</code>, <code>[date]</code>, <code>[current-date]</code>, <code>[time]</code>, <code>[current-time]</code>, <code>[YYYY]</code>, <code>[MM]</code>, <code>[DD]</code></p>
+  <div class="grid">
+    <label for="extension">File Extension</label>
+    <input type="textbox" id="extension">
+  </div>
+  <div class="grid">
+    <label for="mime">Mime Type</label>
+    <input type="textbox" id="mime">
+  </div>
+  <p class="note">Accepted mime types: <code>multipart/related</code>, <code>application/x-mimearchive</code>, <code>message/rfc822</code></p>
 
   <p>
     <input type="button" id="reset" value="Reset">

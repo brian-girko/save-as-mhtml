@@ -11,15 +11,16 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
   'meta': false,
   'notify': true,
   'saveAs': false,
-  'filename': '[title]',
+  'filename': '',
   'extension': 'mhtml',
+  'mime': 'application/x-mimearchive',
   'hint': true
 }, prefs => {
   const next = callback => chrome.pageCapture.saveAsMHTML({
     tabId: tab.id
   }, bin => {
     const blob = new Blob([bin], {
-      type: 'plain/mhtml'
+      type: prefs.mime
     });
     const lastError = chrome.runtime.lastError;
     if (lastError) {
@@ -31,16 +32,19 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
         'hint': false
       });
     }
-
+    const n = new URL(tab.url);
     const url = URL.createObjectURL(blob);
     const current = new Date();
-    const filename = prefs.filename
+    let filename = (prefs.filename || '[title]')
       .replace('[title]', tab.title)
-      .replace('[date]', current.toLocaleDateString())
+      .replace('[hostname]', n.hostname)
+      .replace('[date]', current.toDateString())
       .replace('[current-date]', current.toLocaleDateString())
-      .replace('[time]', current.toLocaleTimeString())
+      .replace('[time]', current.toTimeString())
       .replace('[current-time]', current.toLocaleTimeString())
-      .replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>{}[\]\\/]/gi, '-') + '.' + prefs.extension;
+      .replace('[YYYY]', current.getFullYear())
+      .replace('[MM]', ('0' + (current.getMonth() + 1)).substr(-2))
+      .replace('[DD]', ('0' + current.getDate()).substr(-2)) + '.' + prefs.extension;
 
     chrome.downloads.download({
       url,
@@ -49,13 +53,30 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
     }, () => {
       const lastError = chrome.runtime.lastError;
       if (lastError) {
+        console.warn('filename issue', filename);
+        filename = filename.substr(0, filename.length - prefs.extension.length - 1).replace(/[\\/*?"<>|]/gi, '-') +
+          '.' + prefs.extension;
         chrome.downloads.download({
           url,
           saveAs: prefs.saveAs,
-          filename: 'page.mhtml'
+          filename
         }, () => {
-          URL.revokeObjectURL(url);
-          callback();
+          const lastError = chrome.runtime.lastError;
+          if (lastError) {
+            console.warn('filename issue', filename);
+            chrome.downloads.download({
+              url,
+              saveAs: prefs.saveAs,
+              filename: 'page.mhtml'
+            }, () => {
+              URL.revokeObjectURL(url);
+              callback();
+            });
+          }
+          else {
+            URL.revokeObjectURL(url);
+            callback();
+          }
         });
       }
       else {
