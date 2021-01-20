@@ -1,8 +1,9 @@
 {
   "manifest_version": 2,
-  "version": "0.1.8",
+  "version": "0.1.9",
   "name": "Save as MHTML",
-  "description": "Edit and save active tab in MHTL/MHT (MIME HTML) archive file format",
+  "description": "__MSG_description__",
+  "default_locale": "en",
   "background": {
     "persistent": false,
     "scripts": [
