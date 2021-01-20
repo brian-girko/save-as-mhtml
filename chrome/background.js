@@ -44,8 +44,10 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
       .replace('[current-time]', current.toLocaleTimeString())
       .replace('[YYYY]', current.getFullYear())
       .replace('[MM]', ('0' + (current.getMonth() + 1)).substr(-2))
-      .replace('[DD]', ('0' + current.getDate()).substr(-2)) + '.' + prefs.extension;
+      .replace('[DD]', ('0' + current.getDate()).substr(-2))
+      .replace(/[\\/]/gi, '-') + '.' + prefs.extension;
 
+    console.log(filename);
     chrome.downloads.download({
       url,
       saveAs: prefs.saveAs,
@@ -54,8 +56,9 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
       const lastError = chrome.runtime.lastError;
       if (lastError) {
         console.warn('filename issue', filename);
-        filename = filename.substr(0, filename.length - prefs.extension.length - 1).replace(/[\\/*?"<>|]/gi, '-') +
+        filename = filename.substr(0, filename.length - prefs.extension.length - 1).replace(/[*?"<>|:]/gi, '-') +
           '.' + prefs.extension;
+
         chrome.downloads.download({
           url,
           saveAs: prefs.saveAs,
