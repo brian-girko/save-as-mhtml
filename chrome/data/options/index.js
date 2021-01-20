@@ -6,7 +6,7 @@ chrome.storage.local.get({
   'notify': true,
   'saveAs': false,
   'filename': '[title]',
-  'extension': 'mhtml',
+  'extension': 'mht',
   'mime': 'application/x-mimearchive'
 }, prefs => {
   document.getElementById('notify').checked = prefs.notify;
@@ -20,7 +20,7 @@ document.getElementById('save').addEventListener('click', () => chrome.storage.l
   'notify': document.getElementById('notify').checked,
   'saveAs': document.getElementById('saveAs').checked,
   'filename': document.getElementById('filename').value || '[title]',
-  'extension': document.getElementById('extension').value || 'mhtml',
+  'extension': document.getElementById('extension').value || 'mht',
   'mime': document.getElementById('mime').value || 'application/x-mimearchive'
 }, () => {
   toast.textContent = 'Options Saved.';

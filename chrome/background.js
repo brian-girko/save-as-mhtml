@@ -12,7 +12,7 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
   'notify': true,
   'saveAs': false,
   'filename': '',
-  'extension': 'mhtml',
+  'extension': 'mht',
   'mime': 'application/x-mimearchive',
   'hint': true
 }, prefs => {
