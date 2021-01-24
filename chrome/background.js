@@ -38,6 +38,7 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
     let filename = (prefs.filename || '[title]')
       .replace('[title]', tab.title)
       .replace('[hostname]', n.hostname)
+      .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
       .replace('[date]', current.toDateString())
       .replace('[current-date]', current.toLocaleDateString())
       .replace('[time]', current.toTimeString())
