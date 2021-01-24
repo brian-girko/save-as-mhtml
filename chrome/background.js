@@ -8,6 +8,7 @@ const notify = e => chrome.notifications.create({
 });
 
 chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
+  'blob': true,
   'meta': false,
   'notify': true,
   'saveAs': false,
@@ -18,8 +19,16 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
 }, prefs => {
   const next = callback => chrome.pageCapture.saveAsMHTML({
     tabId: tab.id
-  }, bin => {
-    const blob = new Blob([bin], {
+  }, async bin => {
+    let content = (await bin.text());
+
+    // remove blob references
+    if (prefs.blob) {
+      const r = ['blob:http', '://'].map(s => s.split('').map(s => s + '(=\\r\\n)?').join('')).join('s?');
+      content = content.replace(new RegExp(r, 'g'), 'cid:blob.');
+    }
+
+    const blob = new Blob([content], {
       type: prefs.mime
     });
     const lastError = chrome.runtime.lastError;
@@ -48,7 +57,6 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
       .replace('[DD]', ('0' + current.getDate()).substr(-2))
       .replace(/[\\/]/gi, '-') + '.' + prefs.extension;
 
-    console.log(filename);
     chrome.downloads.download({
       url,
       saveAs: prefs.saveAs,
@@ -109,7 +117,8 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
 
 {
   const startup = () => chrome.storage.local.get({
-    meta: false
+    meta: false,
+    blob: true
   }, prefs => {
     chrome.contextMenus.create({
       id: 'edit-page',
@@ -122,6 +131,13 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
       contexts: ['browser_action'],
       type: 'checkbox',
       checked: prefs.meta
+    });
+    chrome.contextMenus.create({
+      id: 'blob',
+      title: 'Replace "blob:" resources',
+      contexts: ['browser_action'],
+      type: 'checkbox',
+      checked: prefs.blob
     });
     chrome.contextMenus.create({
       id: 'simplify',
@@ -183,9 +199,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       runAt: 'document_start'
     });
   }
-  else if (info.menuItemId === 'meta') {
+  else if (info.menuItemId === 'meta' || info.menuItemId === 'blob') {
     chrome.storage.local.set({
-      meta: info.checked
+      [info.menuItemId]: info.checked
     });
   }
 });
