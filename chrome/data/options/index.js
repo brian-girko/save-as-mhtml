@@ -5,7 +5,7 @@ const toast = document.getElementById('toast');
 chrome.storage.local.get({
   'notify': true,
   'saveAs': false,
-  'filename': '[title]',
+  'filename': '[[hostname]] [YYYY].[MM].[DD]—[title]',
   'extension': 'mht',
   'mime': 'application/x-mimearchive'
 }, prefs => {
@@ -19,7 +19,7 @@ chrome.storage.local.get({
 document.getElementById('save').addEventListener('click', () => chrome.storage.local.set({
   'notify': document.getElementById('notify').checked,
   'saveAs': document.getElementById('saveAs').checked,
-  'filename': document.getElementById('filename').value || '[title]',
+  'filename': document.getElementById('filename').value || '[[hostname]] [YYYY].[MM].[DD]—[title]',
   'extension': document.getElementById('extension').value || 'mht',
   'mime': document.getElementById('mime').value || 'application/x-mimearchive'
 }, () => {

@@ -35,7 +35,7 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
     const n = new URL(tab.url);
     const url = URL.createObjectURL(blob);
     const current = new Date();
-    let filename = (prefs.filename || '[title]')
+    let filename = (prefs.filename || '[[hostname]] [YYYY].[MM].[DD]—[title]')
       .replace('[title]', tab.title)
       .replace('[hostname]', n.hostname)
       .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
