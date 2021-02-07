@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "0.2.0",
+  "version": "0.2.2",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
@@ -20,9 +20,7 @@
   "homepage_url": "https://add0n.com/save-as-mhtml.html",
   "icons": {
     "16": "data/icons/16.png",
-    "19": "data/icons/19.png",
     "32": "data/icons/32.png",
-    "38": "data/icons/38.png",
     "48": "data/icons/48.png",
     "64": "data/icons/64.png",
     "128": "data/icons/128.png",

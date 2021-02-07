@@ -5,7 +5,7 @@ const toast = document.getElementById('toast');
 chrome.storage.local.get({
   'notify': true,
   'saveAs': false,
-  'filename': '[[hostname]] [YYYY].[MM].[DD]—[title]',
+  'filename': '[[simplified-hostname]] [YYYY].[MM].[DD]—[title]',
   'extension': 'mht',
   'mime': 'application/x-mimearchive'
 }, prefs => {

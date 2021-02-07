@@ -24,8 +24,10 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
 
     // remove blob references
     if (prefs.blob) {
-      const r = ['blob:http', '://'].map(s => s.split('').map(s => s + '(=\\r\\n)?').join('')).join('s?');
-      content = content.replace(new RegExp(r, 'g'), 'cid:blob.');
+      content.replace(/Content-Location: (blob:https?:\/\/[^\s]+)/g, (a, href) => {
+        const r = new RegExp(href.split('').join('(=\\r\\n)?'), 'g');
+        content = content.replace(r, href.replace('blob:', 'cid:blob.'));
+      });
     }
 
     const blob = new Blob([content], {
@@ -44,7 +46,7 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
     const n = new URL(tab.url);
     const url = URL.createObjectURL(blob);
     const current = new Date();
-    let filename = (prefs.filename || '[[hostname]] [YYYY].[MM].[DD]—[title]')
+    let filename = (prefs.filename || '[[simplified-hostname]] [YYYY].[MM].[DD]—[title]')
       .replace('[title]', tab.title)
       .replace('[hostname]', n.hostname)
       .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
@@ -181,9 +183,7 @@ const onCommand = tab => {
       tabId: tab.id,
       path: {
         '16': 'data/icons/' + (mode === 'on' ? 'active/' : '') + '16.png',
-        '19': 'data/icons/' + (mode === 'on' ? 'active/' : '') + '19.png',
         '32': 'data/icons/' + (mode === 'on' ? 'active/' : '') + '32.png',
-        '38': 'data/icons/' + (mode === 'on' ? 'active/' : '') + '38.png',
         '48': 'data/icons/' + (mode === 'on' ? 'active/' : '') + '48.png'
       }
     });
