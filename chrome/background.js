@@ -67,8 +67,9 @@ chrome.browserAction.onClicked.addListener(tab => chrome.storage.local.get({
       const lastError = chrome.runtime.lastError;
       if (lastError) {
         console.warn('filename issue', filename);
-        filename = filename.substr(0, filename.length - prefs.extension.length - 1).replace(/[*?"<>|:]/gi, '-') +
-          '.' + prefs.extension;
+        filename = filename.substr(0, filename.length - prefs.extension.length - 1)
+          .substr(0, 254)
+          .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
 
         chrome.downloads.download({
           url,
