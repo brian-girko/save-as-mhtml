@@ -1,6 +1,6 @@
 {
   const selection = window.getSelection();
-  if (selection && selection.rangeCount && selection.toString().trim() > 1) {
+  if (selection && selection.rangeCount && selection.toString().trim().length > 1) {
     let range;
     if (selection.getRangeAt) {
       range = selection.getRangeAt(0);
@@ -32,4 +32,8 @@
       alert('Selected area is too small');
     }
   }
+  else {
+    alert('Selected area is too small');
+  }
 }
+console.log(111);

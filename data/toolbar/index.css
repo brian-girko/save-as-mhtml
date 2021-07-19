@@ -3,7 +3,7 @@ body {
   user-select: none;
 }
 #toolbar {
-  background-color: #fafafa;
+  background-color: #ffe7dd;
   border: solid 1px #c4c4c4;
   display: flex;
   padding: 3px 5px;

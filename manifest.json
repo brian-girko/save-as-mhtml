@@ -1,14 +1,12 @@
 {
-  "manifest_version": 2,
-  "version": "0.2.2",
+  "manifest_version": 3,
+  "version": "0.3.0",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
   "background": {
-    "persistent": false,
-    "scripts": [
-      "background.js"
-  ]},
+    "service_worker": "worker.js"
+  },
   "permissions": [
     "storage",
     "pageCapture",
@@ -16,6 +14,9 @@
     "downloads",
     "contextMenus",
     "notifications"
+  ],
+  "optional_permissions": [
+    "scripting"
   ],
   "homepage_url": "https://add0n.com/save-as-mhtml.html",
   "icons": {
@@ -27,12 +28,12 @@
     "256": "data/icons/256.png",
     "512": "data/icons/512.png"
   },
-  "browser_action": {},
+  "action": {},
   "options_ui": {
-    "page": "data/options/index.html",
-    "chrome_style": true
+    "page": "data/options/index.html"
   },
-  "web_accessible_resources": [
-    "data/toolbar/index.html"
-  ]
+  "web_accessible_resources": [{
+    "resources": ["data/toolbar/index.html"],
+    "matches": ["*://*/*"]
+  }]
 }
