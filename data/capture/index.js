@@ -101,7 +101,7 @@ chrome.storage.local.get({
   });
   const closing = () => {
     document.title = 'Done!';
-    setTimeout(() => window.close(), 1000);
+    setTimeout(() => window.close(), 5000);
   };
 
   if (prefs.meta) {

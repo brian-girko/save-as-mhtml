@@ -1,9 +1,13 @@
 body {
-  font-size: 22px;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin: 10px;
   height: calc(100vh - 20px);
+  font-size: 12px;
+}
+p {
+  font-size: 22px;
 }

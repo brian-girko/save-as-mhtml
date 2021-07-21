@@ -13,9 +13,10 @@ chrome.action.onClicked.addListener(tab => {
   args.set('href', tab.url);
   args.set('title', tab.title);
 
+
   chrome.windows.getCurrent(win => {
-    const width = 400;
-    const height = 200;
+    const width = 500;
+    const height = 300;
 
     chrome.windows.create({
       url: 'data/capture/index.html?' + args.toString(),
