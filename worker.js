@@ -14,17 +14,25 @@ chrome.action.onClicked.addListener(tab => {
   args.set('title', tab.title);
 
 
-  chrome.windows.getCurrent(win => {
-    const width = 500;
-    const height = 300;
+  chrome.storage.local.get({
+    background: false
+  }, prefs => {
+    chrome.windows.getCurrent(win => {
+      const width = 400;
+      const height = 300;
 
-    chrome.windows.create({
-      url: 'data/capture/index.html?' + args.toString(),
-      type: 'popup',
-      width,
-      height,
-      left: win.left + Math.round((win.width - width) / 2),
-      top: win.top + Math.round((win.height - height) / 2)
+      const options = {
+        url: 'data/capture/index.html?' + args.toString(),
+        type: 'popup',
+        width,
+        height,
+        left: win.left + Math.round((win.width - width) / 2),
+        top: win.top + Math.round((win.height - height) / 2)
+      };
+      if (prefs.background) {
+        options.focused = false;
+      }
+      chrome.windows.create(options);
     });
   });
 });
@@ -156,6 +164,50 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.method === 'notify') {
     notify(request.message);
+  }
+  else if (request.method === 'download') {
+    const {url, prefs} = request;
+    let {filename} = request;
+
+    console.log(prefs);
+    chrome.downloads.download({
+      url,
+      saveAs: prefs.saveAs,
+      filename
+    }, () => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        console.warn('filename issue', filename);
+        filename = filename.substr(0, filename.length - prefs.extension.length - 1)
+          .substr(0, 254)
+          .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
+
+        chrome.downloads.download({
+          url,
+          saveAs: prefs.saveAs,
+          filename
+        }, () => {
+          const lastError = chrome.runtime.lastError;
+          if (lastError) {
+            console.warn('filename issue', filename);
+            chrome.downloads.download({
+              url,
+              saveAs: prefs.saveAs,
+              filename: 'page.mhtml'
+            }, () => {
+              response();
+            });
+          }
+          else {
+            response();
+          }
+        });
+      }
+      else {
+        response();
+      }
+    });
+    return true;
   }
 });
 

@@ -36,4 +36,3 @@
     alert('Selected area is too small');
   }
 }
-console.log(111);

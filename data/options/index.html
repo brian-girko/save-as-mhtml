@@ -10,15 +10,21 @@
     <input type="checkbox" id="notify">
     <label for="notify">Display desktop notifications</label>
     <input type="checkbox" id="saveAs">
-    <label for="saveAs">Display the file-chooser to allow the user to select the file location</label>
+    <label for="saveAs">Display the file-chooser to allow the user to select the file location (note: uncheck if downloading failed)</label>
+    <input type="checkbox" id="background">
+    <label for="background">Open the capture window in background</label>
   </div>
   <div class="grid">
-    <label for="filename">Filename <a data-href="faq10" target="_blank">Format</a></label>
+    <label class="nospace" for="filename">Filename <a data-href="faq10" target="_blank">Format</a></label>
     <input type="text" id="filename">
     <p class="note">Available options: <code>[title]</code>, <code>[hostname]</code>, <code>[simplified-hostname]</code>, <code>[date]</code>, <code>[current-date]</code>, <code>[time]</code>, <code>[current-time]</code>, <code>[YYYY]</code>, <code>[MM]</code>, <code>[DD]</code></p>
-    <label for="extension">File <a data-href="faq5" target="_blank">Extension</a></label>
+    <label class="nospace" for="title-length"><a data-href="faq13" target="_blank">Max "[title]"</a> Length</label>
+    <input type="number" id="title-length">
+    <label class="nospace" for="filename-length">Max "filename" Length</label>
+    <input type="number" id="filename-length">
+    <label class="nospace" for="extension">File <a data-href="faq5" target="_blank">Extension</a></label>
     <input type="text" id="extension">
-    <label for="mime">Mime Type</label>
+    <label class="nospace" for="mime">Mime Type</label>
     <input type="text" id="mime">
     <p class="note">Accepted mime types: <code>multipart/related</code>, <code>application/x-mimearchive</code>, <code>message/rfc822</code></p>
   </div>

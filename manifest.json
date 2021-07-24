@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.2",
+  "version": "0.3.5",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
@@ -35,5 +35,10 @@
   "web_accessible_resources": [{
     "resources": ["data/toolbar/index.html"],
     "matches": ["*://*/*"]
-  }]
+  }],
+  "commands": {
+    "_execute_action": {
+      "description": "Press the action button"
+    }
+  }
 }

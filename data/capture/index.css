@@ -1,13 +1,30 @@
 body {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: 10px;
-  height: calc(100vh - 20px);
-  font-size: 12px;
+  margin: 0;
+  height: 100vh;
+  font-size: 13px;
+  display: grid;
+  grid-template-areas: min-content 1fr min-content;
+  justify-items: center;
+  color: #4d5156;
 }
 p {
   font-size: 22px;
+}
+label {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  justify-self: start;
+  padding: 10px;
+}
+.note {
+  background-color: #fff3cd;
+  color: #856405;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  align-self: center;
+  width: calc(100vw - 20px);
 }
