@@ -15,13 +15,9 @@ chrome.storage.local.get({
   'extension': 'mht',
   'mime': 'application/x-mimearchive',
   'hint': true,
-  'background': false,
   'title-length': 150,
   'filename-length': 250
 }, prefs => {
-  document.getElementById('background').checked = prefs.background;
-
-
   const next = callback => chrome.pageCapture.saveAsMHTML({
     tabId: tabId
   }, async bin => {
@@ -82,12 +78,7 @@ chrome.storage.local.get({
   });
   const closing = () => {
     document.title = 'Done!';
-    if (prefs.background) {
-      window.close();
-    }
-    else {
-      setTimeout(() => window.close(), 5000);
-    }
+    setTimeout(() => window.close(), 5000);
   };
 
   if (prefs.meta) {
@@ -110,8 +101,4 @@ chrome.storage.local.get({
   else {
     next(() => closing());
   }
-});
-
-document.getElementById('background').onchange = e => chrome.storage.local.set({
-  background: e.target.checked
 });

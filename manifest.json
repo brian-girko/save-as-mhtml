@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.5",
+  "version": "0.3.6",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
@@ -13,9 +13,7 @@
     "activeTab",
     "downloads",
     "contextMenus",
-    "notifications"
-  ],
-  "optional_permissions": [
+    "notifications",
     "scripting"
   ],
   "homepage_url": "https://add0n.com/save-as-mhtml.html",

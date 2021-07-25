@@ -4,7 +4,7 @@ body {
   height: 100vh;
   font-size: 13px;
   display: grid;
-  grid-template-areas: min-content 1fr min-content;
+  grid-template-rows: min-content 1fr;
   justify-items: center;
   color: #4d5156;
 }

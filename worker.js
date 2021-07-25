@@ -7,33 +7,174 @@ const notify = e => chrome.notifications.create({
   message: e.message || e
 });
 
-chrome.action.onClicked.addListener(tab => {
-  const args = new URLSearchParams();
-  args.set('id', tab.id);
-  args.set('href', tab.url);
-  args.set('title', tab.title);
+const download = ({url, prefs, filename}, done) => chrome.downloads.download({
+  url,
+  saveAs: prefs.saveAs,
+  filename
+}, () => {
+  const lastError = chrome.runtime.lastError;
+  if (lastError) {
+    console.warn('filename issue', filename);
+    filename = filename.substr(0, filename.length - prefs.extension.length - 1)
+      .substr(0, 254)
+      .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
 
-
-  chrome.storage.local.get({
-    background: false
-  }, prefs => {
-    chrome.windows.getCurrent(win => {
-      const width = 400;
-      const height = 300;
-
-      const options = {
-        url: 'data/capture/index.html?' + args.toString(),
-        type: 'popup',
-        width,
-        height,
-        left: win.left + Math.round((win.width - width) / 2),
-        top: win.top + Math.round((win.height - height) / 2)
-      };
-      if (prefs.background) {
-        options.focused = false;
+    chrome.downloads.download({
+      url,
+      saveAs: prefs.saveAs,
+      filename
+    }, () => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        console.warn('filename issue', filename);
+        chrome.downloads.download({
+          url,
+          saveAs: prefs.saveAs,
+          filename: 'page.mhtml'
+        }, done);
       }
-      chrome.windows.create(options);
+      else {
+        done();
+      }
     });
+  }
+  else {
+    done();
+  }
+});
+
+chrome.action.onClicked.addListener(tab => {
+  chrome.storage.local.get({
+    'method': 'background',
+    'blob': true,
+    'meta': false,
+    'notify': true,
+    'saveAs': false,
+    'filename': '',
+    'extension': 'mht',
+    'mime': 'application/x-mimearchive',
+    'hint': true,
+    'title-length': 150,
+    'filename-length': 250
+  }, prefs => {
+    const next = (callback = () => {}) => chrome.pageCapture.saveAsMHTML({
+      tabId: tab.id
+    }, async bin => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        return prefs.notify && notify(lastError);
+      }
+
+      if (prefs.hint) {
+        notify('You can edit the page before saving as MHTML. To open the editor use right-click context menu of the toolbar button');
+        notify('If the result misses an image, scroll to the end of the page and retry!');
+        chrome.storage.local.set({
+          'hint': false
+        });
+      }
+
+      try {
+        if (prefs.method !== 'background') {
+          throw Error('user abort');
+        }
+
+        let content = (await bin.text());
+
+        // remove blob references
+        if (prefs.blob) {
+          content.replace(/Content-Location: (blob:https?:\/\/[^\s]+)/g, (a, href) => {
+            const r = new RegExp(href.split('').join('(=\\r\\n)?'), 'g');
+            content = content.replace(r, href.replace('blob:', 'cid:blob.'));
+          });
+        }
+
+        const n = new URL(tab.url);
+        const current = new Date();
+        let filename = (prefs.filename || '[[simplified-hostname]] [YYYY].[MM].[DD]—[title]')
+          .replace('[title]', tab.title.substr(0, prefs['title-length']))
+          .replace('[hostname]', n.hostname)
+          .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
+          .replace('[date]', current.toDateString())
+          .replace('[current-date]', current.toLocaleDateString())
+          .replace('[time]', current.toTimeString())
+          .replace('[current-time]', current.toLocaleTimeString())
+          .replace('[YYYY]', current.getFullYear())
+          .replace('[MM]', ('0' + (current.getMonth() + 1)).substr(-2))
+          .replace('[DD]', ('0' + current.getDate()).substr(-2))
+          .replace(/[\\/]/gi, '-');
+        filename = filename.substr(0, prefs['filename-length']) + '.' + prefs.extension;
+
+        const r = await chrome.scripting.executeScript({
+          target: {
+            tabId: tab.id
+          },
+          func: (content, type) => {
+            const blob = new Blob([content], {
+              type
+            });
+            return URL.createObjectURL(blob);
+          },
+          args: [content, prefs.mime]
+        });
+        const url = r[0].result;
+
+        const done = () => {
+          chrome.scripting.executeScript({
+            target: {
+              tabId: tab.id
+            },
+            func: href => URL.revokeObjectURL(href),
+            args: [url]
+          });
+          callback();
+        };
+
+        download({url, prefs, filename}, done);
+      }
+      catch (e) {
+        console.warn(e);
+
+        const args = new URLSearchParams();
+        args.set('id', tab.id);
+        args.set('href', tab.url);
+        args.set('title', tab.title);
+
+        chrome.windows.getCurrent(win => {
+          const width = 400;
+          const height = 300;
+
+          chrome.windows.create({
+            url: 'data/capture/index.html?' + args.toString(),
+            type: 'popup',
+            width,
+            height,
+            left: win.left + Math.round((win.width - width) / 2),
+            top: win.top + Math.round((win.height - height) / 2)
+          });
+        });
+
+        callback();
+      }
+    });
+
+    if (prefs.meta) {
+      chrome.scripting.executeScript({
+        target: {
+          tabId: tab.id
+        },
+        files: ['data/meta.js']
+      }).then(() => setTimeout(() => {
+        next(() => chrome.scripting.executeScript({
+          target: {
+            tabId: tab.id
+          },
+          func: () => [...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove())
+        }));
+      })).catch(() => next());
+    }
+    else {
+      next();
+    }
   });
 });
 
@@ -105,45 +246,23 @@ const onCommand = tab => {
       notify(e);
     }
   };
-  try {
-    chrome.permissions.request({
-      permissions: ['scripting']
-    }, () => next());
-  }
-  catch (e) {
-    next();
-  }
+  next();
 };
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'edit-page') {
     onCommand(tab);
   }
   else if (info.menuItemId === 'simplify') {
-    chrome.permissions.request({
-      permissions: ['scripting']
-    }, () => {
-      chrome.scripting.executeScript({
-        target: {
-          tabId: tab.id
-        },
-        files: ['data/simple.js']
-      });
-    });
+    chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      files: ['data/simple.js']
+    }).catch(notify);
   }
   else if (info.menuItemId === 'meta') {
-    chrome.permissions.request({
-      permissions: ['scripting']
-    }, granted => {
-      if (granted) {
-        chrome.storage.local.set({
-          [info.menuItemId]: info.checked
-        });
-      }
-      else {
-        chrome.contextMenus.update(info.menuItemId, {
-          checked: false
-        });
-      }
+    chrome.storage.local.set({
+      [info.menuItemId]: info.checked
     });
   }
   else if (info.menuItemId === 'blob') {
@@ -166,48 +285,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     notify(request.message);
   }
   else if (request.method === 'download') {
-    const {url, prefs} = request;
-    let {filename} = request;
-
-    console.log(prefs);
-    chrome.downloads.download({
-      url,
-      saveAs: prefs.saveAs,
-      filename
-    }, () => {
-      const lastError = chrome.runtime.lastError;
-      if (lastError) {
-        console.warn('filename issue', filename);
-        filename = filename.substr(0, filename.length - prefs.extension.length - 1)
-          .substr(0, 254)
-          .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
-
-        chrome.downloads.download({
-          url,
-          saveAs: prefs.saveAs,
-          filename
-        }, () => {
-          const lastError = chrome.runtime.lastError;
-          if (lastError) {
-            console.warn('filename issue', filename);
-            chrome.downloads.download({
-              url,
-              saveAs: prefs.saveAs,
-              filename: 'page.mhtml'
-            }, () => {
-              response();
-            });
-          }
-          else {
-            response();
-          }
-        });
-      }
-      else {
-        response();
-      }
-    });
-    return true;
+    download(request, response);
   }
 });
 
