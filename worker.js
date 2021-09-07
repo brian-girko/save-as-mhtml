@@ -104,32 +104,8 @@ chrome.action.onClicked.addListener(tab => {
           .replace(/[\\/]/gi, '-');
         filename = filename.substr(0, prefs['filename-length']) + '.' + prefs.extension;
 
-        const r = await chrome.scripting.executeScript({
-          target: {
-            tabId: tab.id
-          },
-          func: (content, type) => {
-            const blob = new Blob([content], {
-              type
-            });
-            return URL.createObjectURL(blob);
-          },
-          args: [content, prefs.mime]
-        });
-        const url = r[0].result;
-
-        const done = () => {
-          chrome.scripting.executeScript({
-            target: {
-              tabId: tab.id
-            },
-            func: href => URL.revokeObjectURL(href),
-            args: [url]
-          });
-          callback();
-        };
-
-        download({url, prefs, filename}, done);
+        const url = 'data:' + prefs.mime + ';base64,' + btoa(content);
+        download({url, prefs, filename}, callback);
       }
       catch (e) {
         console.warn(e);
