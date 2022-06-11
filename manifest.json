@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.7",
+  "version": "0.3.8",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
@@ -35,8 +35,15 @@
     "matches": ["*://*/*"]
   }],
   "commands": {
-    "_execute_action": {
-      "description": "Press the action button"
+    "_execute_action": {},
+    "edit-page": {
+      "description": "Toggle Edit Mode"
+    },
+    "reader-view": {
+      "description": "Open in Reader View (declutter)"
+    },
+    "simplify": {
+      "description": "Keep Selection Only"
     }
   }
 }

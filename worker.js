@@ -233,7 +233,8 @@ const onCommand = tab => {
   };
   next();
 };
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+
+const context = (info, tab) => {
   if (info.menuItemId === 'edit-page') {
     onCommand(tab);
   }
@@ -276,7 +277,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       [info.menuItemId]: info.checked
     });
   }
-});
+};
+chrome.contextMenus.onClicked.addListener(context);
+chrome.commands.onCommand.addListener((menuItemId, tab) => context({
+  menuItemId
+}, tab));
+
 chrome.runtime.onMessage.addListener((request, sender, response) => {
   if (request.method === 'close-me') {
     onCommand(sender.tab);
