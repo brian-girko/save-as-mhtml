@@ -7,41 +7,45 @@ const notify = e => chrome.notifications.create({
   message: e.message || e
 });
 
-const download = ({url, prefs, filename}, done) => chrome.downloads.download({
-  url,
-  saveAs: prefs.saveAs,
-  filename
-}, () => {
-  const lastError = chrome.runtime.lastError;
-  if (lastError) {
-    console.warn('filename issue', filename);
-    filename = filename.substr(0, filename.length - prefs.extension.length - 1)
-      .substr(0, 254)
-      .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
+const download = ({url, prefs, filename}, done) => {
+  chrome.downloads.download({
+    url,
+    saveAs: prefs.saveAs,
+    filename
+  }, id => {
+    const lastError = chrome.runtime.lastError;
 
-    chrome.downloads.download({
-      url,
-      saveAs: prefs.saveAs,
-      filename
-    }, () => {
-      const lastError = chrome.runtime.lastError;
-      if (lastError) {
-        console.warn('filename issue', filename);
-        chrome.downloads.download({
-          url,
-          saveAs: prefs.saveAs,
-          filename: 'page.mhtml'
-        }, done);
-      }
-      else {
-        done();
-      }
-    });
-  }
-  else {
-    done();
-  }
-});
+    if (lastError) {
+      console.warn('filename issue', filename);
+      filename = filename.substr(0, filename.length - prefs.extension.length - 1)
+        .substr(0, 254)
+        .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
+
+      chrome.downloads.download({
+        url,
+        saveAs: prefs.saveAs,
+        filename
+      }, id => {
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          console.warn('filename issue', filename);
+          chrome.downloads.download({
+            url,
+            saveAs: prefs.saveAs,
+            filename: 'page.mhtml'
+          }, done);
+        }
+        else {
+          done(id);
+        }
+      });
+    }
+    else {
+      done(id);
+    }
+  });
+};
+
 
 chrome.action.onClicked.addListener(tab => {
   chrome.storage.local.get({
@@ -179,6 +183,11 @@ chrome.action.onClicked.addListener(tab => {
       checked: prefs.blob
     });
     chrome.contextMenus.create({
+      id: 'reader-view',
+      title: 'Reader View (declutter)',
+      contexts: ['action']
+    });
+    chrome.contextMenus.create({
       id: 'simplify',
       title: 'Keep Selection Only',
       contexts: ['action']
@@ -207,7 +216,7 @@ const onCommand = tab => {
       else {
         chrome.tabs.sendMessage(tab.id, {
           method: 'unload'
-        });
+        }, () => chrome.runtime.lastError);
       }
       chrome.action.setIcon({
         tabId: tab.id,
@@ -227,6 +236,27 @@ const onCommand = tab => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'edit-page') {
     onCommand(tab);
+  }
+  else if (info.menuItemId === 'reader-view') {
+    chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      files: ['data/reader-view/Readability.js']
+    }).then(() => chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      func: () => {
+        const article = new window.Readability(document.cloneNode(true)).parse();
+
+        const dom = (new DOMParser()).parseFromString(article.content, `text/html`);
+        const title = document.title;
+        document.head.replaceWith(dom.querySelector('head'));
+        document.body.replaceWith(dom.querySelector('body'));
+        document.title = title;
+      }
+    }));
   }
   else if (info.menuItemId === 'simplify') {
     chrome.scripting.executeScript({
