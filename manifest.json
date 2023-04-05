@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.8",
+  "version": "0.3.9",
   "name": "Save as MHTML",
   "description": "__MSG_description__",
   "default_locale": "en",
@@ -16,7 +16,7 @@
     "notifications",
     "scripting"
   ],
-  "homepage_url": "https://add0n.com/save-as-mhtml.html",
+  "homepage_url": "https://webextension.org/listing/save-as-mhtml.html",
   "icons": {
     "16": "data/icons/16.png",
     "32": "data/icons/32.png",

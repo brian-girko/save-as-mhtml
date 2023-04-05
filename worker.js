@@ -46,7 +46,6 @@ const download = ({url, prefs, filename}, done) => {
   });
 };
 
-
 chrome.action.onClicked.addListener(tab => {
   chrome.storage.local.get({
     'method': 'background',
@@ -124,7 +123,7 @@ chrome.action.onClicked.addListener(tab => {
           const height = 300;
 
           chrome.windows.create({
-            url: 'data/capture/index.html?' + args.toString(),
+            url: '/data/capture/index.html?' + args.toString(),
             type: 'popup',
             width,
             height,
@@ -142,7 +141,7 @@ chrome.action.onClicked.addListener(tab => {
         target: {
           tabId: tab.id
         },
-        files: ['data/meta.js']
+        files: ['/data/meta.js']
       }).then(() => setTimeout(() => {
         next(() => chrome.scripting.executeScript({
           target: {
@@ -210,7 +209,7 @@ const onCommand = tab => {
       if (result === 'on') {
         chrome.scripting.executeScript({
           target: {tabId: tab.id},
-          files: ['data/toolbar/inject.js']
+          files: ['/data/toolbar/inject.js']
         });
       }
       else {
@@ -221,9 +220,9 @@ const onCommand = tab => {
       chrome.action.setIcon({
         tabId: tab.id,
         path: {
-          '16': 'data/icons/' + (result === 'on' ? 'active/' : '') + '16.png',
-          '32': 'data/icons/' + (result === 'on' ? 'active/' : '') + '32.png',
-          '48': 'data/icons/' + (result === 'on' ? 'active/' : '') + '48.png'
+          '16': '/data/icons/' + (result === 'on' ? 'active/' : '') + '16.png',
+          '32': '/data/icons/' + (result === 'on' ? 'active/' : '') + '32.png',
+          '48': '/data/icons/' + (result === 'on' ? 'active/' : '') + '48.png'
         }
       });
     }
@@ -243,7 +242,7 @@ const context = (info, tab) => {
       target: {
         tabId: tab.id
       },
-      files: ['data/reader-view/Readability.js']
+      files: ['/data/reader-view/Readability.js']
     }).then(() => chrome.scripting.executeScript({
       target: {
         tabId: tab.id
@@ -264,7 +263,7 @@ const context = (info, tab) => {
       target: {
         tabId: tab.id
       },
-      files: ['data/simple.js']
+      files: ['/data/simple.js']
     }).catch(notify);
   }
   else if (info.menuItemId === 'meta') {
