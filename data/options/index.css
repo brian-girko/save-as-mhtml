@@ -3,7 +3,8 @@ body {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   background-color: #fff;
   color: #4d5156;
-  margin: 10px;
+  width: min(100% - 2rem, 70rem);
+  margin-inline: auto;
 }
 select,
 button,
@@ -63,4 +64,8 @@ a:visited {
 .note {
   margin-top: 5px;
   grid-column: 1/3;
+}
+
+#custom-styling {
+  margin-top: 5px;
 }

@@ -6,7 +6,7 @@
   <link rel="stylesheet" type="text/css" href="index.css">
 </head>
 <body>
-  <div class="grid">
+  <p class="grid">
     <input type="checkbox" id="notify">
     <label for="notify">Display desktop notifications</label>
     <input type="checkbox" id="saveAs">
@@ -17,8 +17,12 @@
     <label for="save-cm">Show "Save as MHTML" context menu on page context menu</label>
     <input type="checkbox" id="edit-cm">
     <label for="edit-cm">Show "Toggle Edit Mode" context menu on page context menu</label>
-  </div>
-  <div class="grid">
+    <input type="checkbox" id="reader-cm">
+    <label for="reader-cm">Show "Reader View (declutter)" context menu on page context menu</label>
+    <input type="checkbox" id="simple-cm">
+    <label for="simple-cm">Show "Keep Selection Only" context menu on selection context menu</label>
+  </p>
+  <p class="grid">
     <label class="nospace" for="filename">Filename <a data-href="faq10" target="_blank">Format</a></label>
     <input type="text" id="filename">
     <label class="nospace" for="title-length"><a data-href="faq13" target="_blank">Max "[title]"</a> Length</label>
@@ -33,7 +37,12 @@
       <option value="application/x-mimearchive">application/x-mimearchive</option>
       <option value="message/rfc822">message/rfc822</option>
     </select>
-  </div>
+  </p>
+
+  <p>
+    <b>Custom Styling on Reader View</b>
+    <textarea rows="20" id="custom-styling"></textarea>
+  </p>
 
   <p>
     <input type="button" id="support" value="Support Development">

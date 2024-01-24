@@ -107,8 +107,18 @@ const onClicked = tab => {
           .replace(/[\\/]/gi, '-');
         filename = filename.substr(0, prefs['filename-length']) + '.' + prefs.extension;
 
-        const url = 'data:' + prefs.mime + ';base64,' + btoa(content);
-        download({url, prefs, filename}, callback);
+        const blob = new Blob([content], {
+          type: prefs.mime
+        });
+        const reader = new FileReader();
+        reader.onload = e => {
+          download({
+            url: e.target.result,
+            prefs,
+            filename
+          }, callback);
+        };
+        reader.readAsDataURL(blob);
       }
       catch (e) {
         console.warn(e);
@@ -162,8 +172,10 @@ chrome.action.onClicked.addListener(onClicked);
   const build = () => chrome.storage.local.get({
     'meta': false,
     'blob': true,
-    'save-cm': false,
-    'edit-cm': false
+    'save-cm': true,
+    'edit-cm': false,
+    'reader-cm': false,
+    'simple-cm': false
   }, prefs => {
     chrome.contextMenus.create({
       id: 'edit-page',
@@ -214,12 +226,32 @@ chrome.action.onClicked.addListener(onClicked);
     else {
       chrome.contextMenus.remove('edit-cm', () => chrome.runtime.lastError);
     }
+    if (prefs['reader-cm']) {
+      chrome.contextMenus.create({
+        id: 'reader-cm',
+        title: 'Reader View (declutter)',
+        contexts: ['page']
+      }, () => chrome.runtime.lastError);
+    }
+    else {
+      chrome.contextMenus.remove('reader-cm', () => chrome.runtime.lastError);
+    }
+    if (prefs['simple-cm']) {
+      chrome.contextMenus.create({
+        id: 'simple-cm',
+        title: 'Keep Selection Only',
+        contexts: ['selection']
+      }, () => chrome.runtime.lastError);
+    }
+    else {
+      chrome.contextMenus.remove('simple-cm', () => chrome.runtime.lastError);
+    }
   });
   chrome.runtime.onInstalled.addListener(build);
   chrome.runtime.onStartup.addListener(build);
 
   chrome.storage.onChanged.addListener(ps => {
-    if (ps['save-cm'] || ps['edit-cm']) {
+    if (ps['save-cm'] || ps['edit-cm'] || ps['reader-cm']) {
       build();
     }
   });
@@ -269,34 +301,83 @@ const context = (info, tab) => {
   else if (info.menuItemId === 'save-cm') {
     onClicked(tab);
   }
-  else if (info.menuItemId === 'reader-view') {
-    chrome.scripting.executeScript({
-      target: {
-        tabId: tab.id
-      },
-      files: ['/data/reader-view/Readability.js']
-    }).then(() => chrome.scripting.executeScript({
-      target: {
-        tabId: tab.id
-      },
-      func: () => {
-        const article = new window.Readability(document.cloneNode(true)).parse();
+  else if (info.menuItemId === 'reader-view' || info.menuItemId === 'reader-cm') {
+    chrome.storage.local.get({
+      'custom-styling': `body {
+  font-size: 14px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  color: #666
+  background-color: #fff;
+  width: min(100% - 2rem, 70rem);
+  margin-inline: auto;
+}`
+    }, prefs => {
+      chrome.scripting.executeScript({
+        target: {
+          tabId: tab.id
+        },
+        files: ['/data/reader-view/Readability.js']
+      }).then(() => chrome.scripting.executeScript({
+        target: {
+          tabId: tab.id
+        },
+        func: css => {
+          const article = new window.Readability(document.cloneNode(true)).parse();
 
-        const dom = (new DOMParser()).parseFromString(article.content, `text/html`);
-        const title = document.title;
-        document.head.replaceWith(dom.querySelector('head'));
-        document.body.replaceWith(dom.querySelector('body'));
-        document.title = title;
-      }
-    }));
+          const dom = (new DOMParser()).parseFromString(article.content, `text/html`);
+          const title = document.title;
+          document.head.replaceWith(dom.querySelector('head'));
+          document.body.replaceWith(dom.querySelector('body'));
+          if (css) {
+            const style = document.createElement('style');
+            style.textContent = css;
+            document.head.append(style);
+          }
+          document.title = title;
+        },
+        args: [prefs['custom-styling']]
+      })).catch(notify);
+    });
   }
-  else if (info.menuItemId === 'simplify') {
-    chrome.scripting.executeScript({
-      target: {
-        tabId: tab.id
-      },
-      files: ['/data/simple.js']
-    }).catch(notify);
+  else if (info.menuItemId === 'simplify' || info.menuItemId === 'simple-cm') {
+    chrome.storage.local.get({
+      'custom-styling': `body {
+  font-size: 14px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  color: #666
+  background-color: #fff;
+  width: min(100% - 2rem, 70rem);
+  margin-inline: auto;
+}`
+    }, prefs => {
+      chrome.scripting.executeScript({
+        target: {
+          tabId: tab.id
+        },
+        files: ['/data/simple.js']
+      }).then(r => {
+        if (r && r[0]) {
+          if (r[0].result === 'converted') {
+            return chrome.scripting.executeScript({
+              target: {
+                tabId: tab.id
+              },
+              func: css => {
+                if (css) {
+                  const style = document.createElement('style');
+                  style.textContent = css;
+                  document.querySelector('body').append(style);
+                }
+              },
+              args: [prefs['custom-styling']]
+            });
+          }
+          else {
+            notify(r[0].result || 'Unknown Error');
+          }
+        }
+      }).catch(notify);
+    });
   }
   else if (info.menuItemId === 'meta') {
     chrome.storage.local.set({

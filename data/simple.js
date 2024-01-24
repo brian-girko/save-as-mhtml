@@ -26,13 +26,28 @@
     article.appendChild(range.cloneContents());
 
     if (article.textContent.length > 20) {
-      document.replaceChild(article, document.documentElement);
+      const title = document.title;
+
+      const head = document.createElement('head');
+      const body = document.createElement('body');
+      body.append(article);
+
+      if (document.head) {
+        document.head.replaceWith(head);
+      }
+      document.body.replaceWith(body);
+      document.title = title;
+
+      // return
+      'converted'
     }
     else {
-      alert('Selected area is too small');
+      // return
+      'Selected area is too small'
     }
   }
   else {
-    alert('Selected area is too small');
+    // return
+    'Selected area is too small'
   }
 }
