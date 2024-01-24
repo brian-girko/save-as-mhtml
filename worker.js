@@ -46,7 +46,7 @@ const download = ({url, prefs, filename}, done) => {
   });
 };
 
-chrome.action.onClicked.addListener(tab => {
+const onClicked = tab => {
   chrome.storage.local.get({
     'method': 'background',
     'blob': true,
@@ -155,45 +155,74 @@ chrome.action.onClicked.addListener(tab => {
       next();
     }
   });
-});
+};
+chrome.action.onClicked.addListener(onClicked);
 
 {
-  const startup = () => chrome.storage.local.get({
-    meta: false,
-    blob: true
+  const build = () => chrome.storage.local.get({
+    'meta': false,
+    'blob': true,
+    'save-cm': false,
+    'edit-cm': false
   }, prefs => {
     chrome.contextMenus.create({
       id: 'edit-page',
       title: 'Toggle Edit Mode',
       contexts: ['action']
-    });
+    }, () => chrome.runtime.lastError);
     chrome.contextMenus.create({
       id: 'meta',
       title: 'Add Meta Data',
       contexts: ['action'],
       type: 'checkbox',
       checked: prefs.meta
-    });
+    }, () => chrome.runtime.lastError);
     chrome.contextMenus.create({
       id: 'blob',
       title: 'Replace "blob:" resources',
       contexts: ['action'],
       type: 'checkbox',
       checked: prefs.blob
-    });
+    }, () => chrome.runtime.lastError);
     chrome.contextMenus.create({
       id: 'reader-view',
       title: 'Reader View (declutter)',
       contexts: ['action']
-    });
+    }, () => chrome.runtime.lastError);
     chrome.contextMenus.create({
       id: 'simplify',
       title: 'Keep Selection Only',
       contexts: ['action']
-    });
+    }, () => chrome.runtime.lastError);
+    if (prefs['save-cm']) {
+      chrome.contextMenus.create({
+        id: 'save-cm',
+        title: 'Save as MHTML',
+        contexts: ['page']
+      }, () => chrome.runtime.lastError);
+    }
+    else {
+      chrome.contextMenus.remove('save-cm', () => chrome.runtime.lastError);
+    }
+    if (prefs['edit-cm']) {
+      chrome.contextMenus.create({
+        id: 'edit-cm',
+        title: 'Toggle Edit Mode',
+        contexts: ['page']
+      }, () => chrome.runtime.lastError);
+    }
+    else {
+      chrome.contextMenus.remove('edit-cm', () => chrome.runtime.lastError);
+    }
   });
-  chrome.runtime.onInstalled.addListener(startup);
-  chrome.runtime.onStartup.addListener(startup);
+  chrome.runtime.onInstalled.addListener(build);
+  chrome.runtime.onStartup.addListener(build);
+
+  chrome.storage.onChanged.addListener(ps => {
+    if (ps['save-cm'] || ps['edit-cm']) {
+      build();
+    }
+  });
 }
 const onCommand = tab => {
   const next = async () => {
@@ -234,8 +263,11 @@ const onCommand = tab => {
 };
 
 const context = (info, tab) => {
-  if (info.menuItemId === 'edit-page') {
+  if (info.menuItemId === 'edit-page' || info.menuItemId === 'edit-cm') {
     onCommand(tab);
+  }
+  else if (info.menuItemId === 'save-cm') {
+    onClicked(tab);
   }
   else if (info.menuItemId === 'reader-view') {
     chrome.scripting.executeScript({

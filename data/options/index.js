@@ -10,8 +10,12 @@ chrome.storage.local.get({
   'extension': 'mht',
   'mime': 'application/x-mimearchive',
   'title-length': 150,
-  'filename-length': 250
+  'filename-length': 250,
+  'save-cm': false,
+  'edit-cm': false
 }, prefs => {
+  document.getElementById('save-cm').checked = prefs['save-cm'];
+  document.getElementById('edit-cm').checked = prefs['edit-cm'];
   document.getElementById('notify').checked = prefs.notify;
   document.getElementById('saveAs').checked = prefs.saveAs;
   document.getElementById('capture').checked = prefs.method !== 'background';
@@ -23,6 +27,8 @@ chrome.storage.local.get({
 });
 
 document.getElementById('save').addEventListener('click', () => chrome.storage.local.set({
+  'save-cm': document.getElementById('save-cm').checked,
+  'edit-cm': document.getElementById('edit-cm').checked,
   'notify': document.getElementById('notify').checked,
   'saveAs': document.getElementById('saveAs').checked,
   'method': document.getElementById('capture').checked ? 'foreground' : 'background',
