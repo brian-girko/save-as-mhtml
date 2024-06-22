@@ -1,25 +1,28 @@
 'use strict';
 
-const notify = e => chrome.notifications.create({
+const notify = (e, timeout = 3000) => chrome.notifications.create({
   type: 'basic',
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
   message: e.message || e
+}, id => {
+  if (timeout > 0) {
+    setTimeout(() => chrome.notifications.clear(id), timeout);
+  }
 });
 
 const download = ({url, prefs, filename}, done) => {
-  chrome.downloads.download({
+  const options = {
     url,
     saveAs: prefs.saveAs,
     filename
-  }, id => {
+  };
+  chrome.downloads.download(options, id => {
     const lastError = chrome.runtime.lastError;
 
     if (lastError) {
       console.warn('filename issue', filename);
-      filename = filename.substr(0, filename.length - prefs.extension.length - 1)
-        .substr(0, 254)
-        .replace(/[*?"<>|:~]/gi, '-') + '.' + prefs.extension;
+      filename = download.sanitize(filename, prefs.extension);
 
       chrome.downloads.download({
         url,
@@ -28,10 +31,9 @@ const download = ({url, prefs, filename}, done) => {
       }, id => {
         const lastError = chrome.runtime.lastError;
         if (lastError) {
-          console.warn('filename issue', filename);
+          console.warn('FILENAME_ISSUE', filename, lastError);
           chrome.downloads.download({
-            url,
-            saveAs: prefs.saveAs,
+            ...options,
             filename: 'page.mhtml'
           }, done);
         }
@@ -44,6 +46,33 @@ const download = ({url, prefs, filename}, done) => {
       done(id);
     }
   });
+};
+// Define a function to sanitize and adjust the filename based on OS
+download.sanitize = (filename, extension) => {
+  // Define regex patterns for invalid characters based on OS
+  let invalidChars;
+  if (navigator.userAgent.includes('Mac')) {
+    invalidChars = /[:]/g;
+  }
+  else if (navigator.userAgent.includes('Linux')) {
+    invalidChars = /[/]/g;
+  }
+  else {
+    // Default to Windows invalid characters if OS cannot be determined
+    invalidChars = /[\\/:*?"<>|]/g;
+  }
+
+  // Remove the existing extension
+  const baseName = filename.substr(0, filename.length - extension.length - 1);
+
+  // Ensure the filename length does not exceed 255 characters minus extension length
+  const maxBaseNameLength = 255 - extension.length - 1;
+  const truncatedBaseName = baseName.substr(0, maxBaseNameLength);
+
+  // Replace invalid characters with a hyphen
+  const sanitizedBaseName = truncatedBaseName.replace(invalidChars, '-');
+
+  return sanitizedBaseName + '.' + extension;
 };
 
 const onClicked = tab => {
@@ -69,8 +98,8 @@ const onClicked = tab => {
       }
 
       if (prefs.hint) {
-        notify('You can edit the page before saving as MHTML. To open the editor use right-click context menu of the toolbar button');
-        notify('If the result misses an image, scroll to the end of the page and retry!');
+        notify('You can edit the page before saving as MHTML. To open the editor use right-click context menu of the toolbar button', -1);
+        notify('If the result misses an image, scroll to the end of the page and retry!', -1);
         chrome.storage.local.set({
           'hint': false
         });
@@ -427,7 +456,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
           const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
           if (doUpdate && previousVersion !== version) {
-            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
+            tabs.query({active: true, lastFocusedWindow: true}, tbs => tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
               active: reason === 'install',
               ...(tbs && tbs.length && {index: tbs[0].index + 1})
