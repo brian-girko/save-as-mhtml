@@ -17,7 +17,6 @@
 
   window.onmessage = e => {
     const command = e.data.method;
-    console.log(command);
 
     const stop = () => {
       e.preventDefault();

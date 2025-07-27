@@ -98,7 +98,8 @@ const onClicked = tab => {
       }
 
       if (prefs.hint) {
-        notify('You can edit the page before saving as MHTML. To open the editor use right-click context menu of the toolbar button', -1);
+        notify(`You can edit the page before saving as MHTML.
+To open the editor use right-click context menu of the toolbar button`, -1);
         notify('If the result misses an image, scroll to the end of the page and retry!', -1);
         chrome.storage.local.set({
           'hint': false
