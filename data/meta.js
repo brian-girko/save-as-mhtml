@@ -1,30 +1,28 @@
-[...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove());
-chrome.storage.local.get({
-  inlcudes: ['href', 'title', 'date']
-}, prefs => chrome.runtime.sendMessage({
-  method: 'introduce'
-}, response => {
+{
   const div = document.createElement('div');
   div.classList.add('save-as-mhtml');
   div.style = `
-    position: sticky;
-    margin: 0;
-    border: none;
-    border-bottom: dashed 1px #ccc;
-    display: grid;
-    grid-gap: 5px;
-    grid-template-columns: min-content 1fr;
+    all: initial;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-bottom: dashed 1px #ccc !important;
+    display: grid !important;
+    grid-gap: 5px !important;
+    grid-template-columns: min-content 1fr !important;
     padding: 10px !important;
-    z-index: 1000000000000;
-    background-color: #fff;
-    font-size: 13px;
-    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-    width: 100vw;
-    direction: ltr;
+    z-index: calc(Infinity) !important;
+    font-size: 13px !important;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+    color: #4d5156 !important;
+    background-color: #fff !important;
   `;
   const shadow = div.attachShadow({mode: 'open'});
 
-  for (const key of prefs.inlcudes) {
+  for (const key of self.prefs.inlcudes) {
     if (key === 'date') {
       shadow.appendChild(Object.assign(document.createElement('span'), {
         textContent: 'Date'
@@ -40,7 +38,7 @@ chrome.storage.local.get({
         textContent: 'Title'
       }));
       shadow.appendChild(Object.assign(document.createElement('span'), {
-        textContent: response.title
+        textContent: self.config.title
       }));
     }
     else if (key === 'href') {
@@ -48,11 +46,11 @@ chrome.storage.local.get({
         textContent: 'Link'
       }));
       const a = document.createElement('a');
-      a.href = response.href;
-      a.textContent = response.href;
+      a.href = self.config.href;
+      a.textContent = self.config.href;
+      a.style.color = '#5567c7';
       shadow.appendChild(a);
     }
   }
-
-  document.body.insertBefore(div, document.body.firstChild);
-}));
+  document.documentElement.append(div);
+}

@@ -92,6 +92,7 @@
     else if (command === 'close') {
       unload();
       stop();
+      document.body.spellcheck = false;
     }
   };
 

@@ -88,7 +88,7 @@ const onClicked = tab => {
     'hint': true,
     'title-length': 150,
     'filename-length': 250
-  }, prefs => {
+  }, async prefs => {
     const next = (callback = () => {}) => chrome.pageCapture.saveAsMHTML({
       tabId: tab.id
     }, async bin => {
@@ -177,19 +177,40 @@ To open the editor use right-click context menu of the toolbar button`, -1);
     });
 
     if (prefs.meta) {
-      chrome.scripting.executeScript({
-        target: {
+      try {
+        const target = {
           tabId: tab.id
-        },
-        files: ['/data/meta.js']
-      }).then(() => setTimeout(() => {
-        next(() => chrome.scripting.executeScript({
-          target: {
-            tabId: tab.id
+        };
+        const prefs = await chrome.storage.local.get({
+          inlcudes: ['href', 'title', 'date']
+        });
+        await chrome.scripting.executeScript({
+          target,
+          injectImmediately: true,
+          func: (prefs, title, href) => {
+            self.prefs = prefs;
+            self.config = {title, href};
           },
-          func: () => [...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove())
-        }));
-      })).catch(() => next());
+          args: [prefs, tab.title, tab.url]
+        });
+        await chrome.scripting.executeScript({
+          target,
+          injectImmediately: true,
+          files: ['/data/meta.js']
+        });
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        next(() => {
+          chrome.scripting.executeScript({
+            target,
+            func: () => [...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove())
+          });
+        });
+      }
+      catch (e) {
+        console.error(e);
+        next();
+      }
     }
     else {
       next();
@@ -428,12 +449,6 @@ chrome.commands.onCommand.addListener((menuItemId, tab) => context({
 chrome.runtime.onMessage.addListener((request, sender, response) => {
   if (request.method === 'close-me') {
     onCommand(sender.tab);
-  }
-  else if (request.method === 'introduce') {
-    response({
-      title: sender.tab.title,
-      href: sender.tab.url
-    });
   }
   else if (request.method === 'notify') {
     notify(request.message);
