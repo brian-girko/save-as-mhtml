@@ -1,56 +1,61 @@
 {
   const div = document.createElement('div');
   div.classList.add('save-as-mhtml');
-  div.style = `
-    all: initial;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-bottom: dashed 1px #ccc !important;
-    display: grid !important;
-    grid-gap: 5px !important;
-    grid-template-columns: min-content 1fr !important;
-    padding: 10px !important;
-    z-index: calc(Infinity) !important;
-    font-size: 13px !important;
-    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
-    color: #4d5156 !important;
-    background-color: #fff !important;
-  `;
+  div.style = `all: initial;`;
   const shadow = div.attachShadow({mode: 'open'});
+  const p = document.createElement('div');
+  p.style = `
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    grid-gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2147483647;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px;
+    border-bottom: 1px dashed #ccc;
+    background: white;
+    font: 13px Arial, sans-serif;
+    color: #4d5156;
+    direction: ltr;
+  `;
+  shadow.appendChild(p);
 
   for (const key of self.prefs.inlcudes) {
     if (key === 'date') {
-      shadow.appendChild(Object.assign(document.createElement('span'), {
+      p.appendChild(Object.assign(document.createElement('span'), {
         textContent: 'Date'
       }));
       const d = new Date();
-      shadow.appendChild(Object.assign(document.createElement('time'), {
+      p.appendChild(Object.assign(document.createElement('time'), {
         datetime: d.toISOString(),
         textContent: d.toLocaleString()
       }));
     }
     else if (key === 'title') {
-      shadow.appendChild(Object.assign(document.createElement('span'), {
+      p.appendChild(Object.assign(document.createElement('span'), {
         textContent: 'Title'
       }));
-      shadow.appendChild(Object.assign(document.createElement('span'), {
+      p.appendChild(Object.assign(document.createElement('span'), {
         textContent: self.config.title
       }));
     }
     else if (key === 'href') {
-      shadow.appendChild(Object.assign(document.createElement('span'), {
+      p.appendChild(Object.assign(document.createElement('span'), {
         textContent: 'Link'
       }));
       const a = document.createElement('a');
       a.href = self.config.href;
       a.textContent = self.config.href;
-      a.style.color = '#5567c7';
-      shadow.appendChild(a);
+      a.style = `
+        color: #5567c7;
+        word-break: break-all;
+        white-space: break-spaces;
+      `;
+      p.appendChild(a);
     }
   }
-  document.documentElement.append(div);
+  // document.documentElement.append(div);
+  document.documentElement.insertBefore(div, document.body);
 }

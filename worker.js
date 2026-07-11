@@ -75,8 +75,13 @@ download.sanitize = (filename, extension) => {
   return sanitizedBaseName + '.' + extension;
 };
 
-const onClicked = tab => {
-  chrome.storage.local.get({
+const onClicked = async tab => {
+  chrome.action.setBadgeText({
+    tabId: tab.id,
+    text: '...'
+  });
+
+  const prefs = await chrome.storage.local.get({
     'method': 'background',
     'blob': true,
     'meta': false,
@@ -88,146 +93,152 @@ const onClicked = tab => {
     'hint': true,
     'title-length': 150,
     'filename-length': 250
-  }, async prefs => {
-    const next = (callback = () => {}) => chrome.pageCapture.saveAsMHTML({
-      tabId: tab.id
-    }, async bin => {
-      const lastError = chrome.runtime.lastError;
-      if (lastError) {
-        return prefs.notify && notify(lastError);
-      }
+  });
+  const next = (action = () => {}) => chrome.pageCapture.saveAsMHTML({
+    tabId: tab.id
+  }, async bin => {
+    const callback = () => {
+      chrome.action.setBadgeText({
+        tabId: tab.id,
+        text: ''
+      });
+      action();
+    };
 
-      if (prefs.hint) {
-        notify(`You can edit the page before saving as MHTML.
-To open the editor use right-click context menu of the toolbar button`, -1);
-        notify('If the result misses an image, scroll to the end of the page and retry!', -1);
-        chrome.storage.local.set({
-          'hint': false
-        });
-      }
-
-      try {
-        if (prefs.method !== 'background') {
-          throw Error('user abort');
-        }
-
-        let content = (await bin.text());
-
-        // remove blob references
-        if (prefs.blob) {
-          content.replace(/Content-Location: (blob:https?:\/\/[^\s]+)/g, (a, href) => {
-            const r = new RegExp(href.split('').join('(=\\r\\n)?'), 'g');
-            content = content.replace(r, href.replace('blob:', 'cid:blob.'));
-          });
-        }
-
-        const n = new URL(tab.url);
-        const current = new Date();
-        let filename = (prefs.filename || '[[simplified-hostname]] [YYYY].[MM].[DD]—[title]')
-          .replace('[title]', tab.title.substr(0, prefs['title-length']))
-          .replace('[hostname]', n.hostname)
-          .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
-          .replace('[date]', current.toDateString())
-          .replace('[current-date]', current.toLocaleDateString())
-          .replace('[time]', current.toTimeString())
-          .replace('[current-time]', current.toLocaleTimeString())
-          .replace('[YYYY]', current.getFullYear())
-          .replace('[MM]', ('0' + (current.getMonth() + 1)).substr(-2))
-          .replace('[DD]', ('0' + current.getDate()).substr(-2))
-          .replace(/[\\/]/gi, '-');
-        filename = filename.substr(0, prefs['filename-length']) + '.' + prefs.extension;
-
-        const blob = new Blob([content], {
-          type: prefs.mime
-        });
-        const reader = new FileReader();
-        reader.onload = e => {
-          download({
-            url: e.target.result,
-            prefs,
-            filename
-          }, callback);
-        };
-        reader.readAsDataURL(blob);
-      }
-      catch (e) {
-        console.warn(e);
-
-        const args = new URLSearchParams();
-        args.set('id', tab.id);
-        args.set('href', tab.url);
-        args.set('title', tab.title);
-
-        chrome.windows.getCurrent(win => {
-          const width = 400;
-          const height = 300;
-
-          chrome.windows.create({
-            url: '/data/capture/index.html?' + args.toString(),
-            type: 'popup',
-            width,
-            height,
-            left: win.left + Math.round((win.width - width) / 2),
-            top: win.top + Math.round((win.height - height) / 2)
-          });
-        });
-
-        callback();
-      }
-    });
-
-    if (prefs.meta) {
-      try {
-        const target = {
-          tabId: tab.id
-        };
-        const prefs = await chrome.storage.local.get({
-          inlcudes: ['href', 'title', 'date']
-        });
-        await chrome.scripting.executeScript({
-          target,
-          injectImmediately: true,
-          func: (prefs, title, href) => {
-            self.prefs = prefs;
-            self.config = {title, href};
-          },
-          args: [prefs, tab.title, tab.url]
-        });
-        await chrome.scripting.executeScript({
-          target,
-          injectImmediately: true,
-          files: ['/data/meta.js']
-        });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        next(() => {
-          chrome.scripting.executeScript({
-            target,
-            func: () => [...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove())
-          });
-        });
-      }
-      catch (e) {
-        console.error(e);
-        next();
-      }
+    const lastError = chrome.runtime.lastError;
+    if (lastError) {
+      return prefs.notify && notify(lastError);
     }
-    else {
-      next();
+
+    if (prefs.hint) {
+      notify(`You can edit the page before saving as MHTML.
+To open the editor use right-click context menu of the toolbar button`, -1);
+      notify('If the result misses an image, scroll to the end of the page and retry!', -1);
+      chrome.storage.local.set({
+        'hint': false
+      });
+    }
+
+    try {
+      if (prefs.method !== 'background') {
+        throw Error('user abort');
+      }
+
+      let content = (await bin.text());
+
+      // remove blob references
+      if (prefs.blob) {
+        content.replace(/Content-Location: (blob:https?:\/\/[^\s]+)/g, (a, href) => {
+          const r = new RegExp(href.split('').join('(=\\r\\n)?'), 'g');
+          content = content.replace(r, href.replace('blob:', 'cid:blob.'));
+        });
+      }
+
+      const n = new URL(tab.url);
+      const current = new Date();
+      let filename = (prefs.filename || '[[simplified-hostname]] [YYYY].[MM].[DD]—[title]')
+        .replace('[title]', tab.title.substr(0, prefs['title-length']))
+        .replace('[hostname]', n.hostname)
+        .replace('[simplified-hostname]', n.hostname.replace('www.', ''))
+        .replace('[date]', current.toDateString())
+        .replace('[current-date]', current.toLocaleDateString())
+        .replace('[time]', current.toTimeString())
+        .replace('[current-time]', current.toLocaleTimeString())
+        .replace('[YYYY]', current.getFullYear())
+        .replace('[MM]', ('0' + (current.getMonth() + 1)).substr(-2))
+        .replace('[DD]', ('0' + current.getDate()).substr(-2))
+        .replace(/[\\/]/gi, '-');
+      filename = filename.substr(0, prefs['filename-length']) + '.' + prefs.extension;
+
+      const blob = new Blob([content], {
+        type: prefs.mime
+      });
+      const reader = new FileReader();
+      reader.onload = e => download({
+        url: e.target.result,
+        prefs,
+        filename
+      }, callback);
+      reader.readAsDataURL(blob);
+    }
+    catch (e) {
+      console.error(e);
+
+      const args = new URLSearchParams();
+      args.set('id', tab.id);
+      args.set('href', tab.url);
+      args.set('title', tab.title);
+
+      chrome.windows.getCurrent(win => {
+        const width = 400;
+        const height = 300;
+
+        chrome.windows.create({
+          url: '/data/capture/index.html?' + args.toString(),
+          type: 'popup',
+          width,
+          height,
+          left: win.left + Math.round((win.width - width) / 2),
+          top: win.top + Math.round((win.height - height) / 2)
+        });
+      });
+
+      callback();
     }
   });
+
+  if (prefs.meta) {
+    try {
+      const target = {
+        tabId: tab.id
+      };
+      const prefs = await chrome.storage.local.get({
+        inlcudes: ['href', 'title', 'date']
+      });
+      await chrome.scripting.executeScript({
+        target,
+        injectImmediately: true,
+        func: (prefs, title, href) => {
+          self.prefs = prefs;
+          self.config = {title, href};
+        },
+        args: [prefs, tab.title, tab.url]
+      });
+      await chrome.scripting.executeScript({
+        target,
+        injectImmediately: true,
+        files: ['/data/meta.js']
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      next(() => {
+        // chrome.scripting.executeScript({
+        //   target,
+        //   func: () => [...document.querySelectorAll('.save-as-mhtml')].forEach(f => f.remove())
+        // });
+      });
+    }
+    catch (e) {
+      console.error(e);
+      next();
+    }
+  }
+  else {
+    next();
+  }
 };
 chrome.action.onClicked.addListener(onClicked);
 
 {
-  const build = () => chrome.storage.local.get({
-    'meta': false,
-    'blob': true,
-    'save-cm': true,
-    'edit-cm': false,
-    'reader-cm': false,
-    'simple-cm': false
-  }, prefs => {
+  const build = async () => {
+    const prefs = await chrome.storage.local.get({
+      'meta': false,
+      'blob': true,
+      'save-cm': true,
+      'edit-cm': false,
+      'reader-cm': false,
+      'simple-cm': false
+    });
     chrome.contextMenus.create({
       id: 'edit-page',
       title: 'Toggle Edit Mode',
@@ -297,9 +308,19 @@ chrome.action.onClicked.addListener(onClicked);
     else {
       chrome.contextMenus.remove('simple-cm', () => chrome.runtime.lastError);
     }
-  });
-  chrome.runtime.onInstalled.addListener(build);
-  chrome.runtime.onStartup.addListener(build);
+  };
+  {
+    const once = () => {
+      if (once.done) {
+        return;
+      }
+      once.done = true;
+
+      build();
+    };
+    chrome.runtime.onInstalled.addListener(once);
+    chrome.runtime.onStartup.addListener(once);
+  }
 
   chrome.storage.onChanged.addListener(ps => {
     if (ps['save-cm'] || ps['edit-cm'] || ps['reader-cm']) {
@@ -307,45 +328,42 @@ chrome.action.onClicked.addListener(onClicked);
     }
   });
 }
-const onCommand = tab => {
-  const next = async () => {
-    try {
-      const [{result}] = await chrome.scripting.executeScript({
+const onCommand = async tab => {
+  try {
+    const [{result}] = await chrome.scripting.executeScript({
+      target: {tabId: tab.id},
+      function() {
+        const mode = document.designMode === 'off' ? 'on' : 'off';
+        document.designMode = mode;
+        return document.designMode;
+      }
+    });
+    if (result === 'on') {
+      chrome.scripting.executeScript({
         target: {tabId: tab.id},
-        function() {
-          const mode = document.designMode === 'off' ? 'on' : 'off';
-          document.designMode = mode;
-          return document.designMode;
-        }
-      });
-      if (result === 'on') {
-        chrome.scripting.executeScript({
-          target: {tabId: tab.id},
-          files: ['/data/toolbar/inject.js']
-        });
-      }
-      else {
-        chrome.tabs.sendMessage(tab.id, {
-          method: 'unload'
-        }, () => chrome.runtime.lastError);
-      }
-      chrome.action.setIcon({
-        tabId: tab.id,
-        path: {
-          '16': '/data/icons/' + (result === 'on' ? 'active/' : '') + '16.png',
-          '32': '/data/icons/' + (result === 'on' ? 'active/' : '') + '32.png',
-          '48': '/data/icons/' + (result === 'on' ? 'active/' : '') + '48.png'
-        }
+        files: ['/data/toolbar/inject.js']
       });
     }
-    catch (e) {
-      notify(e);
+    else {
+      chrome.tabs.sendMessage(tab.id, {
+        method: 'unload'
+      }, () => chrome.runtime.lastError);
     }
-  };
-  next();
+    chrome.action.setIcon({
+      tabId: tab.id,
+      path: {
+        '16': '/data/icons/' + (result === 'on' ? 'active/' : '') + '16.png',
+        '32': '/data/icons/' + (result === 'on' ? 'active/' : '') + '32.png',
+        '48': '/data/icons/' + (result === 'on' ? 'active/' : '') + '48.png'
+      }
+    });
+  }
+  catch (e) {
+    notify(e);
+  }
 };
 
-const context = (info, tab) => {
+const context = async (info, tab) => {
   if (info.menuItemId === 'edit-page' || info.menuItemId === 'edit-cm') {
     onCommand(tab);
   }
@@ -353,8 +371,9 @@ const context = (info, tab) => {
     onClicked(tab);
   }
   else if (info.menuItemId === 'reader-view' || info.menuItemId === 'reader-cm') {
-    chrome.storage.local.get({
-      'custom-styling': `body {
+    try {
+      const prefs = await chrome.storage.local.get({
+        'custom-styling': `body {
   font-size: 14px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   color: #666
@@ -362,13 +381,14 @@ const context = (info, tab) => {
   width: min(100% - 2rem, 70rem);
   margin-inline: auto;
 }`
-    }, prefs => {
-      chrome.scripting.executeScript({
+      });
+      await chrome.scripting.executeScript({
         target: {
           tabId: tab.id
         },
         files: ['/data/reader-view/Readability.js']
-      }).then(() => chrome.scripting.executeScript({
+      });
+      await chrome.scripting.executeScript({
         target: {
           tabId: tab.id
         },
@@ -387,12 +407,17 @@ const context = (info, tab) => {
           document.title = title;
         },
         args: [prefs['custom-styling']]
-      })).catch(notify);
-    });
+      });
+    }
+    catch (e) {
+      console.error(e);
+      notify(e);
+    }
   }
   else if (info.menuItemId === 'simplify' || info.menuItemId === 'simple-cm') {
-    chrome.storage.local.get({
-      'custom-styling': `body {
+    try {
+      const prefs = await chrome.storage.local.get({
+        'custom-styling': `body {
   font-size: 14px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   color: #666
@@ -400,35 +425,38 @@ const context = (info, tab) => {
   width: min(100% - 2rem, 70rem);
   margin-inline: auto;
 }`
-    }, prefs => {
-      chrome.scripting.executeScript({
+      });
+      const r = await chrome.scripting.executeScript({
         target: {
           tabId: tab.id
         },
         files: ['/data/simple.js']
-      }).then(r => {
-        if (r && r[0]) {
-          if (r[0].result === 'converted') {
-            return chrome.scripting.executeScript({
-              target: {
-                tabId: tab.id
-              },
-              func: css => {
-                if (css) {
-                  const style = document.createElement('style');
-                  style.textContent = css;
-                  document.querySelector('body').append(style);
-                }
-              },
-              args: [prefs['custom-styling']]
-            });
-          }
-          else {
-            notify(r[0].result || 'Unknown Error');
-          }
+      });
+      if (r && r[0]) {
+        if (r[0].result === 'converted') {
+          await chrome.scripting.executeScript({
+            target: {
+              tabId: tab.id
+            },
+            func: css => {
+              if (css) {
+                const style = document.createElement('style');
+                style.textContent = css;
+                document.querySelector('body').append(style);
+              }
+            },
+            args: [prefs['custom-styling']]
+          });
         }
-      }).catch(notify);
-    });
+        else {
+          throw Error(new Error(r[0].result || 'Unknown Error'));
+        }
+      }
+    }
+    catch (e) {
+      console.error(e);
+      notify(e);
+    }
   }
   else if (info.menuItemId === 'meta') {
     chrome.storage.local.set({

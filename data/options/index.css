@@ -6,11 +6,16 @@ body {
   width: min(100% - 2rem, 70rem);
   margin-inline: auto;
 }
+h1 {
+  text-align: center;
+  background-color: #ebebeb;
+  padding: 20px;
+}
 select,
 button,
 input[type=submit],
 input[type=button] {
-  height: 24px;
+  padding: 5px;
   color: #444;
   background-image: linear-gradient(rgb(237, 237, 237), rgb(237, 237, 237) 38%, rgb(222, 222, 222));
   box-shadow: rgba(0, 0, 0, 0.08) 0 1px 0, rgba(255, 255, 255, 0.75) 0 1px 2px inset;
@@ -60,7 +65,6 @@ a:visited {
 .nospace {
   white-space: nowrap;
 }
-
 .note {
   margin-top: 5px;
   grid-column: 1/3;

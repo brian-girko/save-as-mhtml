@@ -39,15 +39,18 @@
       document.title = title;
 
       // return
+      // eslint-disable-next-line semi
       'converted'
     }
     else {
       // return
+      // eslint-disable-next-line semi
       'Selected area is too small'
     }
   }
   else {
     // return
+    // eslint-disable-next-line semi
     'Selected area is too small'
   }
 }
